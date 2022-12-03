@@ -52,27 +52,3 @@ public class day3b {
         }
     }
 }
-
-
-            /*
-            for (char c :commonItemTypes){
-                if (finalItems.isEmpty()) {
-                    finalItems.push(c);
-                    continue;
-                }
-
-
-             */
-                /*
-                if (finalItems.peek()!=c) {
-                    finalItems.push(c);
-                }else {
-                    continue;
-                }
-            }
-
-
-
-
-                 */
-
