@@ -63,10 +63,11 @@ public class day13a {
         //只要是数字，就包装为PacketList加入packet
 
         int index = 1; //从第二个位置开始，第一个位置默认为[
-        int endIndex = index + 1;
+
         while (index < s.length()) {
             if (s.charAt(index) == '[') {
                 int listDepth = 1;
+                int endIndex = index + 1;
                 //说明第x个元素为list,则需要找到list结束的位置，也就是第一个']'的位置
 
                 while (listDepth > 0) {
@@ -87,7 +88,7 @@ public class day13a {
                 packet.sublists.add(newP);
                 index = endIndex;
             } else {
-                endIndex = s.indexOf(",", index + 1);
+                int endIndex = s.indexOf(",", index + 1);
 
                 if (endIndex == -1) { //是list中最后一个元素
                     endIndex = s.indexOf("]", index);
@@ -164,13 +165,13 @@ public class day13a {
                 }
             }
 
-            int leftVal = leftPacket.sublists.get(compareIndex).value;
-            int rightVal = rightPacket.sublists.get(compareIndex).value;
+            int leftVal = leftCur.value;
+            int rightVal = rightCur.value;
 
 
             //Case 3: Both are lists
             if (leftVal == -1 && rightVal == -1 ) {
-                int compare = compare(leftPacket.sublists.get(compareIndex), rightPacket.sublists.get(compareIndex));
+                int compare = compare(leftCur, rightCur);
                 if (compare != 0) { //已经可以比较出是否正确
                     return compare;
                 } else { //还看不出是否正确，这时候要进一步比较

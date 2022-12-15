@@ -68,22 +68,20 @@ public class day13b {
 
     public static PacketList parsePacket(String s) {
         PacketList packet = new PacketList();
-
         int index = 1;
-        int endIndex = index + 1;
+
         while (index < s.length()) {
             if (s.charAt(index) == '[') {
                 int listDepth = 1;
+                int endIndex = index + 1;
 
                 while (listDepth > 0) {
-
                     if (s.charAt(endIndex) == '[') {
                         listDepth++;
                     }
                     if (s.charAt(endIndex) == ']') {
                         listDepth--;
                     }
-
                     endIndex++;
                 }
 
@@ -92,14 +90,10 @@ public class day13b {
                 packet.sublists.add(newP);
                 index = endIndex;
             } else {
-
-                endIndex = s.indexOf(",", index + 1);
-
+                int endIndex = s.indexOf(",", index + 1);
                 if (endIndex == -1) {
-
                     endIndex = s.indexOf("]", index);
                 }
-
                 String ele = s.substring(index, endIndex);
                 PacketList num = new PacketList();
                 try {
@@ -159,7 +153,6 @@ public class day13b {
                 newLeftHolder.sublists.add(newLeft);
 
                 int compare = compare(newLeftHolder, rightCur);
-
                 if (compare != 0) {
                     return compare;
                 } else {
@@ -168,13 +161,12 @@ public class day13b {
                 }
             }
 
-
-            int leftVal = leftPacket.sublists.get(compareIndex).value;
-            int rightVal = rightPacket.sublists.get(compareIndex).value;
+            int leftVal = leftCur.value;
+            int rightVal = rightCur.value;
 
             //Case 3: Both are lists
             if (leftVal == -1 && rightVal == -1 ) {
-                int compare = compare(leftPacket.sublists.get(compareIndex), rightPacket.sublists.get(compareIndex));
+                int compare = compare(leftCur, rightCur);
                 if (compare != 0) {
                     return compare;
                 } else {
