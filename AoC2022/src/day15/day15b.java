@@ -29,26 +29,34 @@ public class day15b {
         }
 
         public Range rangeAt(int row) {
-            int dist = Math.abs(x-beaconX)+ Math.abs(y-beaconY);
-            if( row < y-dist || row > y+dist ) { //超出了最大值
+            int Manhattan = Math.abs(x-beaconX)+ Math.abs(y-beaconY);
+
+            //如果纵坐标超出了该Sensor已匹配的曼哈顿距离：
+            if( row < y-Manhattan || row > y+Manhattan ) {
                 return null;
             }
-            return new Range( x-(dist - Math.abs(y-row)), x+ (dist - Math.abs(y-row)));
-            //返回 x坐标的范围：能使在这个row上和这个Sensor的曼哈顿距离相等；
+
+            //如果纵坐标未超出该Sensor已匹配的曼哈顿距离：
+            // -- >返回在此row上小于等于该Sensor已匹配的曼哈顿距离的横坐标范围(在此范围内不可能存在未探测到的beacon）
+            return new Range( x-(Manhattan - Math.abs(y-row)), x+ (Manhattan - Math.abs(y-row)));
+
         }
     }
 
+
+
     static class Range {
-        //在当前row上的x范围最大值
-        int min, max;
-        Range (int min, int max) {
-            this.min = min;
-            this.max = max;
+        //在当前row上，小于等于该Sensor已匹配的曼哈顿距离的横坐标范围-->在此范围内不可能存在未探测到的beacon
+        int minX, maxX;
+        Range (int minX, int maxX) {
+            this.minX = minX;
+            this.maxX = maxX;
         }
 
         public int size() {
-            return 1+max-min;
+            return 1+maxX-minX;
         }
+       //个数总和
     }
 
 
@@ -56,46 +64,51 @@ public class day15b {
 
 
     public static void main(String[] args) {
+    //1. 将所有input数据封装为Sensor对象，即获得已知S-B的坐标
         File file = new File("AoC2022/inputs/input_day15.txt");
         try {
             List<Sensor> sensors = Files.readAllLines(file.toPath())
                     .stream()
                     .map(Sensor::new).toList();
 
-            //sensors.forEach(System.out::println);
 
+    //2. 获得part1的答案：找到当前row上不可能存在beacon的位置总和，减去已探测到的beacon个数
             int row = 2000000;
-            Stack<Range> combined = getRanges(sensors, row);
 
-            //可能的beacon的数目
+            Stack<Range> combined = getRanges(sensors, row);//简化的、合并后的Range大全
+
+            //在该row上，不可能存在的beacon的数目总和
             long countRangeSum = combined.stream().mapToInt(Range::size).sum();
 
-            //input数据中，Count所有在此row上的beacon数
+            //在该row上，已经被检测到存在的beacon数目总和
             long countInputBeaconX = sensors.stream().filter(s -> s.beaconY == row).map(s -> s.beaconX).distinct().count();
+
+
             long total =  countRangeSum - countInputBeaconX;
             //System.out.println("Part one answer is "+total);
             long time = System.currentTimeMillis();
 
-            for(int i=0; i<4000000; i++) {
-                combined = getRanges(sensors, i);
-
-                // Crop ranges to our visible area
-
-                //检查栈底
-                combined.get(0).min = Math.max(0, combined.get(0).min);
-                //检查栈顶
-                combined.peek().max = Math.min(4000000, combined.peek().max);
 
 
+    //3. 获得part2的答案：在指定的探测范围内，逐行寻找不可能存在beacon区域是否存在gap，若找到此gap点，该位置即为distress signal的位置
+            for(int y=0; y<4_000_000; y++) {
+                combined = getRanges(sensors, y); //在指定的y轴范围内，找到每行row上不可能存在beacon的位置总和，并简化合并
+
+                //分别检查栈底的minX和栈顶的maxX，与指定的x轴范围做裁剪
+                combined.get(0).minX = Math.max(0, combined.get(0).minX);
+                combined.peek().maxX = Math.min(4_000_000, combined.peek().maxX);
+
+                //在该row上，不可能存在的beacon的数目总和
                 countRangeSum = combined.stream().mapToInt(Range::size).sum();
 
 
-                if( countRangeSum != 4000001 ) {
-                    // If the ranges don't cover every single square, find the gap
-                    for( int ind=0; ind<combined.size()-1; ind++ ) {
-                        if(combined.get(ind).max < combined.get(ind+1).min) {
-                            System.out.println("On row "+i+" gap is "+combined.get(ind).max+" - "+combined.get(ind+1).min);
-                            System.out.println("Part 2 result = "+(4000000L*(combined.get(ind).max+1) + i));
+                //如果在该row上，不可能存在的beacon的数目总和没有填满整行，则说明存在gap：找到gap
+                if( countRangeSum != 4_000_001 ) {
+                    for( int i=0; i<combined.size()-1; i++ ) {//在combined里，从底部（minX最小值）开始，挨个寻找
+
+                        if(combined.get(i).maxX < combined.get(i+1).minX) {
+                            System.out.println("On row "+row+" gap is "+combined.get(i+1).minX+" - "+combined.get(i).maxX);
+                            System.out.println("Part 2 result = "+(4_000_000L*(combined.get(i).maxX+1) + row));
                         }
                     }
                     break;
@@ -107,25 +120,33 @@ public class day15b {
         }
     }
 
+
+
+
+
     private static Stack<Range> getRanges(List<Sensor> sensors, int row) {
-        //在指定的row中，将input中的所有传感器取出可能的beacon的x范围值，按照从大到小排序
+
+        //在指定的row中，取出不可能匹配其他beacon的Range，根据minX从小到大排序
         List<Range> ranges = sensors.stream()
                 .map(s -> s.rangeAt(row))
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparingInt(r -> r.min))
+                .sorted(Comparator.comparingInt(r -> r.minX))
                 .toList();
 
         Stack<Range> combined = new Stack<>();
 
-        //在可能的beacon的x范围中取出每个范围值，找到最大的范围值
-        for(Range current: ranges) {
-            if( combined.empty() || combined.peek().max < current.min ) {
-                combined.push(current);
+
+        //合并Range
+        for(Range currentMinX: ranges) {
+            //对于无法合并的区域（x轴存在gap）：存进combined
+            if( combined.empty() || combined.peek().maxX < currentMinX.minX ) {
+                combined.push(currentMinX);
             }
             else {
-                combined.peek().max = Math.max(combined.peek().max, current.max);
+            //对于可合并的区域：直接合并Range
+                combined.peek().maxX = Math.max(combined.peek().maxX, currentMinX.maxX);
             }
         }
-        return combined;
+        return combined; //返回：在指定的row中不可能匹配其他beacon的Range（合并版）
     }
 }
