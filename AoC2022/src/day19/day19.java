@@ -1,10 +1,7 @@
 package day19;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class day19 {
